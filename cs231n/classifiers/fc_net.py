@@ -47,6 +47,14 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W1' and 'b1' and second layer weights #
         # and biases using the keys 'W2' and 'b2'.                                 #
         ############################################################################
+        b1 = np.zeros( hidden_dim)
+        b2 = np.zeros(num_classes)
+        W1 = weight_scale * np.random.randn(input_dim, hidden_dim)
+        W2 = weight_scale * np.random.randn(hidden_dim, num_classes)
+        self.params['W1'] = W1
+        self.params['W2'] = W2
+        self.params['b1'] = b1
+        self.params['b2'] = b2
         pass
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -77,6 +85,16 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
+        W1 = self.params['W1']
+        b1 = self.params ['b1']
+        W2 = self.params['W2']
+        b2 = self .params['b2']
+        X_reshape = X.reshape(X.shape[0], -1)
+        fc1 =X_reshape.dot(W1) + b1
+        reLU = fc1
+        reLU [reLU <0 ] = 0
+        fc2 = reLU.dot(W2) + b2
+        scores = fc2
         pass
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -97,6 +115,35 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
+        num_example = X.shape[0]
+        exp_scores = np.exp(scores)
+        probs = exp_scores / np.sum(exp_scores, axis = 1, keepdims = True)
+        correct_probs = probs[range(num_example), y]
+        neg_logprobs = -np.log(correct_probs)
+        data_loss = np.sum(neg_logprobs)
+        data_loss /= num_example
+        reg_loss = 0.5 * self.reg * ( np.sum (W1 * W1)  +  np.sum (W2 * W2) )
+        loss = data_loss  + reg_loss
+
+        reg = self.reg
+
+        dscores = probs
+        dscores [range(num_example), y] -= 1 
+        dscores /= num_example
+        dW2 = reLU.T.dot(dscores)
+        dW2 += reg * W2
+        db2 = np.sum (dscores, axis = 0)
+        dreLU = dscores.dot (W2.T)
+        dreLU_back = dreLU
+        dreLU_back[dreLU_back < 0] = 0
+        dW1 = X_reshape.T .dot (dreLU_back)
+        dW1 += reg * W1
+        db1 = np.sum (dreLU_back, axis = 0)
+        grads['W1'] = dW1
+        grads['b1'] = db1
+        grads['W2'] =dW2
+        grads['b2'] = db2
+
         pass
         ############################################################################
         #                             END OF YOUR CODE                             #
